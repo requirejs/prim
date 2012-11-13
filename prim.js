@@ -89,12 +89,12 @@ var prim;
                 p.errback(no);
             },
             resolve: function (v) {
-                check(v);
+                check(p);
                 p.v = v;
                 notify(ok, v);
             },
             reject: function (e) {
-                check(e);
+                check(p);
                 p.e = e;
                 notify(fail, e);
             }

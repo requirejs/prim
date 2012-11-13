@@ -2,14 +2,17 @@
 
 var prim = require('../prim');
 
-exports.fulfilled = function () {
-    return prim();
+exports.fulfilled = function (val) {
+    var p = prim();
+    p.resolve(val);
+    return p;
 };
 
-exports.rejected = function () {
-    return prim();
-}
-
+exports.rejected = function (err) {
+    var p = prim();
+    p.reject(err);
+    return p;
+};
 
 exports.pending = function () {
     var p = prim();
