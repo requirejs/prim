@@ -1,3 +1,4 @@
+/*global process, setTimeout, define, module */
 
 var prim;
 (function () {
@@ -39,38 +40,53 @@ var prim;
         });
     }
 
-
-var p = prim();
-
-    p.then(function (a) {
-        return b;
-    }).then(function (b) {
-        return c;
-    })
-    .fail()
-
     prim = function prim(yes, no) {
         var p,
-            endFail = false,
             ok = yes ? [yes] : [],
             fail = no ? [no] : [];
 
         return (p = {
-            then: function (yes, no) {
-//Need to return new promise, but need to also have that promise
-//use the yes function's return value as its resolution (same for no),
-//and only called after resolution of this promise.
-//ALSO: need to handle case where return value is a promise. Call then()
-//on it if it has a .then
+            callback: function (yes, no) {
+                if (no) {
+                    p.errback(no);
+                }
 
-                var next = prim(yes, no);
-
-                listen(p, ok, yes, 'v');
-                listen(p, fail, no, 'e');
+                if (hasProp('v')) {
+                    prim.nextTick(function () {
+                        yes(p.v);
+                    });
+                } else {
+                    ok.push(yes);
+                }
             },
+
+            errback: function (no) {
+                if (hasProp('e')) {
+                    prim.nextTick(function () {
+                        no(p.e);
+                    });
+                } else {
+                    fail.push(no);
+                }
+            },
+
+            then: function (yes, no) {
+                var next = prim();
+
+                p.callback(function (v) {
+                    v = yes(v);
+                    if (v.then) {
+                        v.then(next.resolve, next.reject);
+                    } else {
+                        next.resolve(v);
+                    }
+                }, no);
+
+                return next;
+            },
+
             fail: function (no) {
-                listen(p, fail, no, 'e');
-                endFail = true;
+                p.errback(no);
             },
             resolve: function (v) {
                 check(v);
@@ -81,20 +97,21 @@ var p = prim();
                 check(e);
                 p.e = e;
                 notify(fail, e);
-                if (!fail.length && endFail) {
-                    throw e;
-                }
-            },
-            end: function () {
-                //? how to know that no one already handled the error?
-                if (hasProp(p, e) && !fail.length) {
-
-                }
             }
         });
     };
 
-    prim.nextTick = function (fn) {
+    prim.nextTick = typeof process !== 'undefined' && process.nextTick ?
+            process.nextTick : (typeof setTimeout !== 'undefined' ?
+                function (fn) {
+                setTimeout(fn, 0);
+            } : function (fn) {
         fn();
-    };
+    });
+
+    if (typeof define === 'function' && define.amd) {
+        define(function () { return prim; });
+    } else if (typeof module !== 'undefined' && module.exports) {
+        module.exports = prim;
+    }
 }());
