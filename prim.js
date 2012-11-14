@@ -57,10 +57,10 @@ var prim;
         });
     }
 
-    prim = function prim(yes, no) {
+    prim = function prim() {
         var p,
-            ok = yes ? [yes] : [],
-            fail = no ? [no] : [];
+            ok = [],
+            fail = [];
 
         return (p = {
             callback: function (yes, no) {
@@ -87,58 +87,6 @@ var prim;
                 }
             },
 
-            start: function (fn) {
-                p.resolve();
-                return p.promise.then(fn);
-            },
-
-            promise: {
-                then: function (yes, no) {
-                    var next = prim();
-
-                    p.callback(function (v) {
-                        var err;
-
-                        try {
-                            v = yes ? yes(v) : v;
-                        } catch (e) {
-                            err = e;
-                            next.reject(err);
-                        }
-
-                        if (!err) {
-                            if (v && v.then) {
-                                v.then(next.resolve, next.reject);
-                            } else {
-                                next.resolve(v);
-                            }
-                        }
-                    }, function (e) {
-                        var err;
-
-                        try {
-                            err = no && no(e);
-
-                            if (!err) {
-                                next.reject(e);
-                            } else if (err instanceof Error) {
-                                next.reject(err);
-                            } else {
-                                if (err && err.then) {
-                                    err.then(next.resolve, next.reject);
-                                } else {
-                                    next.resolve(err);
-                                }
-                            }
-                        } catch (noErr) {
-                            next.reject(noErr);
-                        }
-                    });
-
-                    return next.promise;
-                }
-            },
-
             resolve: function (v) {
                 if (check(p)) {
                     p.v = v;
@@ -149,6 +97,59 @@ var prim;
                 if (check(p)) {
                     p.e = e;
                     notify(fail, e);
+                }
+            },
+
+            start: function (fn) {
+                p.resolve();
+                return p.promise.then(fn);
+            },
+
+            promise: {
+                then: function (yes, no) {
+                    var next = prim();
+
+                    p.callback(function (v) {
+                        try {
+                            v = yes ? yes(v) : v;
+
+                            if (v && v.then) {
+                                v.then(next.resolve, next.reject);
+                            } else {
+                                next.resolve(v);
+                            }
+                        } catch (e) {
+                            next.reject(e);
+                        }
+                    }, function (e) {
+                        var err;
+
+                        try {
+                            if (!no) {
+                                next.reject(e);
+                            } else {
+                                err = no(e);
+
+                                if (err instanceof Error) {
+                                    next.reject(err);
+                                } else {
+                                    if (err && err.then) {
+                                        err.then(next.resolve, next.reject);
+                                    } else {
+                                        next.resolve(err);
+                                    }
+                                }
+                            }
+                        } catch (e2) {
+                            next.reject(e2);
+                        }
+                    });
+
+                    return next.promise;
+                },
+
+                fail: function (no) {
+                    return p.promise.then(null, no);
                 }
             }
         });
