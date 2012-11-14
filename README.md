@@ -21,8 +21,8 @@ updated once and hopefully work async or sync by flipping a function switch.
 
 This code will take shortcuts by assuming the code producing and consuming
 the promises trust each other. `prim.hideResolutionConflict` can be set to
-true though to allow the promise-tests to pass. However the default is to
-throw if a deferred tries to get resolved/rejected twice in a row, to help
+true to allow the "resolution-races" promise-tests to pass. However the default
+is to throw if a deferred tries to get resolved/rejected twice in a row, to help
 debugging code.
 
 ### Size
@@ -37,7 +37,7 @@ on an ongoing basis.
 prim uses [promise-tests](https://github.com/domenic/promise-tests) as the
 baseline tests to check if it is working like a promise library.
 
-To get the tests to run:
+To get the tests to run, you need node installed:
 
     cd tests
     npm install promise-tests
