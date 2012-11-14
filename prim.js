@@ -51,7 +51,7 @@ var prim;
                     p.errback(no);
                 }
 
-                if (hasProp('v')) {
+                if (hasProp(p, 'v')) {
                     prim.nextTick(function () {
                         yes(p.v);
                     });
@@ -61,7 +61,7 @@ var prim;
             },
 
             errback: function (no) {
-                if (hasProp('e')) {
+                if (hasProp(p, 'e')) {
                     prim.nextTick(function () {
                         no(p.e);
                     });
@@ -74,11 +74,19 @@ var prim;
                 var next = prim();
 
                 p.callback(function (v) {
-                    v = yes(v);
-                    if (v.then) {
+                    var err;
+
+                    v = yes ? yes(v) : v;
+
+                    if (v && v.then) {
                         v.then(next.resolve, next.reject);
                     } else {
-                        next.resolve(v);
+                        try {
+                            next.resolve(v);
+                        } catch (e) {
+                            err = no ? no(e) : e;
+                            next.reject(err);
+                        }
                     }
                 }, no);
 
