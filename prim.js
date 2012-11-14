@@ -32,8 +32,8 @@ var prim;
         if (ary) {
             var i;
             for (i = 0; i < ary.length; i += 1) {
-                if (ary[i] && func(ary[i], i, ary)) {
-                    break;
+                if (ary[i]) {
+                    func(ary[i], i, ary);
                 }
             }
         }
