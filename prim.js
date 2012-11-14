@@ -76,19 +76,41 @@ var prim;
                 p.callback(function (v) {
                     var err;
 
-                    v = yes ? yes(v) : v;
+                    try {
+                        v = yes ? yes(v) : v;
+                    } catch (e) {
+                        err = e;
+                        next.reject(err);
+                    }
 
-                    if (v && v.then) {
-                        v.then(next.resolve, next.reject);
-                    } else {
-                        try {
+                    if (!err) {
+                        if (v && v.then) {
+                            v.then(next.resolve, next.reject);
+                        } else {
                             next.resolve(v);
-                        } catch (e) {
-                            err = no ? no(e) : e;
-                            next.reject(err);
                         }
                     }
-                }, no);
+                }, function (e) {
+                    var err;
+
+                    try {
+                        err = no && no(e);
+
+                        if (!err) {
+                            next.reject(e);
+                        } else if (err instanceof Error) {
+                            next.reject(err);
+                        } else {
+                            if (err && err.then) {
+                                err.then(next.resolve, next.reject);
+                            } else {
+                                next.resolve(err);
+                            }
+                        }
+                    } catch (noErr) {
+                        next.reject(noErr);
+                    }
+                });
 
                 return next;
             },
