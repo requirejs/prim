@@ -8,20 +8,20 @@ prim.hideResolutionConflict = true;
 exports.fulfilled = function (val) {
     var p = prim();
     p.resolve(val);
-    return p;
+    return p.promise;
 };
 
 exports.rejected = function (err) {
     var p = prim();
     p.reject(err);
-    return p;
+    return p.promise;
 };
 
 exports.pending = function () {
     var p = prim();
 
     return {
-        promise: p,
+        promise: p.promise,
         fulfill: p.resolve,
         reject: p.reject
     };

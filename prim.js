@@ -87,49 +87,56 @@ var prim;
                 }
             },
 
-            then: function (yes, no) {
-                var next = prim();
+            start: function (fn) {
+                p.resolve();
+                return p.promise.then(fn);
+            },
 
-                p.callback(function (v) {
-                    var err;
+            promise: {
+                then: function (yes, no) {
+                    var next = prim();
 
-                    try {
-                        v = yes ? yes(v) : v;
-                    } catch (e) {
-                        err = e;
-                        next.reject(err);
-                    }
+                    p.callback(function (v) {
+                        var err;
 
-                    if (!err) {
-                        if (v && v.then) {
-                            v.then(next.resolve, next.reject);
-                        } else {
-                            next.resolve(v);
+                        try {
+                            v = yes ? yes(v) : v;
+                        } catch (e) {
+                            err = e;
+                            next.reject(err);
                         }
-                    }
-                }, function (e) {
-                    var err;
-
-                    try {
-                        err = no && no(e);
 
                         if (!err) {
-                            next.reject(e);
-                        } else if (err instanceof Error) {
-                            next.reject(err);
-                        } else {
-                            if (err && err.then) {
-                                err.then(next.resolve, next.reject);
+                            if (v && v.then) {
+                                v.then(next.resolve, next.reject);
                             } else {
-                                next.resolve(err);
+                                next.resolve(v);
                             }
                         }
-                    } catch (noErr) {
-                        next.reject(noErr);
-                    }
-                });
+                    }, function (e) {
+                        var err;
 
-                return next;
+                        try {
+                            err = no && no(e);
+
+                            if (!err) {
+                                next.reject(e);
+                            } else if (err instanceof Error) {
+                                next.reject(err);
+                            } else {
+                                if (err && err.then) {
+                                    err.then(next.resolve, next.reject);
+                                } else {
+                                    next.resolve(err);
+                                }
+                            }
+                        } catch (noErr) {
+                            next.reject(noErr);
+                        }
+                    });
+
+                    return next.promise;
+                }
             },
 
             resolve: function (v) {
