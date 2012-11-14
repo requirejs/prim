@@ -21,7 +21,9 @@ updated once and hopefully work async or sync by flipping a function switch.
 
 This code will take shortcuts by assuming the code producing and consuming
 the promises trust each other. `prim.hideResolutionConflict` can be set to
-true though to allow the promise-tests to pass.
+true though to allow the promise-tests to pass. However the default is to
+throw if a deferred tries to get resolved/rejected twice in a row, to help
+debugging code.
 
 ### Size
 
