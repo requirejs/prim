@@ -1,4 +1,17 @@
+
+/**
+ * prim 0.0.0 Copyright (c) 2012, The Dojo Foundation All Rights Reserved.
+ * Available via the MIT or new BSD license.
+ * see: http://github.com/requirejs/prim for details
+ */
+
 /*global process, setTimeout, define, module */
+
+//Set prime.hideResolutionConflict = true to allow "resolution-races"
+//in promise-tests to pass.
+//Since the goal of prim is to be a small impl for trusted code, it is
+//more important to normally throw in this case so that we can find
+//logic errors quicker.
 
 var prim;
 (function () {
@@ -28,8 +41,12 @@ var prim;
 
     function check(p) {
         if (hasProp(p, 'e') || hasProp(p, 'v')) {
-            throw new Error('nope');
+            if (!prim.hideResolutionConflict) {
+                throw new Error('nope');
+            }
+            return false;
         }
+        return true;
     }
 
     function notify(ary, value) {
@@ -115,18 +132,17 @@ var prim;
                 return next;
             },
 
-            fail: function (no) {
-                p.errback(no);
-            },
             resolve: function (v) {
-                check(p);
-                p.v = v;
-                notify(ok, v);
+                if (check(p)) {
+                    p.v = v;
+                    notify(ok, v);
+                }
             },
             reject: function (e) {
-                check(p);
-                p.e = e;
-                notify(fail, e);
+                if (check(p)) {
+                    p.e = e;
+                    notify(fail, e);
+                }
             }
         });
     };

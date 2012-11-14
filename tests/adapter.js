@@ -2,6 +2,9 @@
 
 var prim = require('../prim');
 
+//Set this to true, to allow the resolution-races tests to pass.
+prim.hideResolutionConflict = true;
+
 exports.fulfilled = function (val) {
     var p = prim();
     p.resolve(val);
