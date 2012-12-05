@@ -17,7 +17,6 @@ var prim;
 (function () {
     'use strict';
     var op = Object.prototype,
-        ostring = op.toString,
         hasOwn = op.hasOwnProperty;
 
     function hasProp(obj, prop) {
@@ -85,6 +84,14 @@ var prim;
                 } else {
                     fail.push(no);
                 }
+            },
+
+            finished: function () {
+                return hasProp(p, 'e') || hasProp(p, 'v');
+            },
+
+            rejected: function () {
+                return hasProp(p, 'e');
             },
 
             resolve: function (v) {
