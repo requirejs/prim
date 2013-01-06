@@ -5,7 +5,7 @@
  * see: http://github.com/requirejs/prim for details
  */
 
-/*global process, setTimeout, define, module */
+/*global setImmediate, process, setTimeout, define, module */
 
 //Set prime.hideResolutionConflict = true to allow "resolution-races"
 //in promise-tests to pass.
@@ -180,13 +180,14 @@ var prim;
         return result;
     };
 
-    prim.nextTick = typeof process !== 'undefined' && process.nextTick ?
+    prim.nextTick = typeof setImmediate === 'function' ? setImmediate :
+        (typeof process !== 'undefined' && process.nextTick ?
             process.nextTick : (typeof setTimeout !== 'undefined' ?
                 function (fn) {
                 setTimeout(fn, 0);
             } : function (fn) {
         fn();
-    });
+    }));
 
     if (typeof define === 'function' && define.amd) {
         define(function () { return prim; });
