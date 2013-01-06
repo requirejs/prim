@@ -1,6 +1,6 @@
 
 /**
- * prim 0.0.0 Copyright (c) 2012, The Dojo Foundation All Rights Reserved.
+ * prim 0.0.1 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/prim for details
  */
@@ -120,7 +120,9 @@ var prim;
 
                     p.callback(function (v) {
                         try {
-                            v = yes ? yes(v) : v;
+                            if (yes && typeof yes === 'function') {
+                                v = yes(v);
+                            }
 
                             if (v && v.then) {
                                 v.then(next.resolve, next.reject);
@@ -134,19 +136,15 @@ var prim;
                         var err;
 
                         try {
-                            if (!no) {
+                            if (!no || typeof no !== 'function') {
                                 next.reject(e);
                             } else {
                                 err = no(e);
 
-                                if (err instanceof Error) {
-                                    next.reject(err);
+                                if (err && err.then) {
+                                    err.then(next.resolve, next.reject);
                                 } else {
-                                    if (err && err.then) {
-                                        err.then(next.resolve, next.reject);
-                                    } else {
-                                        next.resolve(err);
-                                    }
+                                    next.resolve(err);
                                 }
                             }
                         } catch (e2) {
