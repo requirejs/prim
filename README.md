@@ -57,7 +57,7 @@ prim().start(function () {
 prim uses
 [promises-aplus-tests](https://github.com/promises-aplus/promises-tests) as the
 baseline tests to check if it is working like a promise library. It currently
-passes version 1.0.1 of those tests, the latest version as of this writing.
+passes version 1.2.1 of those tests, the latest version as of this writing.
 
 To get the tests to run, you need node installed:
 

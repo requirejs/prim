@@ -1,6 +1,6 @@
 
 /**
- * prim 0.0.1 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
+ * prim 0.0.2 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/prim for details
  */
@@ -17,7 +17,9 @@ var prim;
 (function () {
     'use strict';
     var op = Object.prototype,
-        hasOwn = op.hasOwnProperty;
+        hasOwn = op.hasOwnProperty,
+        waitingId,
+        waiting = [];
 
     function hasProp(obj, prop) {
         return hasOwn.call(obj, prop);
@@ -46,6 +48,22 @@ var prim;
             return false;
         }
         return true;
+    }
+
+    function callWaiting() {
+        waitingId = 0;
+        var w = waiting;
+        waiting = [];
+        while (w.length) {
+            w.shift()();
+        }
+    }
+
+    function asyncTick(fn) {
+        waiting.push(fn);
+        if (!waitingId) {
+            waitingId = setTimeout(callWaiting, 0);
+        }
     }
 
     function notify(ary, value) {
@@ -124,7 +142,7 @@ var prim;
                                 v = yes(v);
                             }
 
-                            if (v && v.then) {
+                            if (v && typeof v.then === 'function') {
                                 v.then(next.resolve, next.reject);
                             } else {
                                 next.resolve(v);
@@ -141,7 +159,7 @@ var prim;
                             } else {
                                 err = no(e);
 
-                                if (err && err.then) {
+                                if (err && typeof err.then === 'function') {
                                     err.then(next.resolve, next.reject);
                                 } else {
                                     next.resolve(err);
@@ -181,9 +199,7 @@ var prim;
     prim.nextTick = typeof setImmediate === 'function' ? setImmediate :
         (typeof process !== 'undefined' && process.nextTick ?
             process.nextTick : (typeof setTimeout !== 'undefined' ?
-                function (fn) {
-                setTimeout(fn, 0);
-            } : function (fn) {
+                asyncTick : function (fn) {
         fn();
     }));
 
