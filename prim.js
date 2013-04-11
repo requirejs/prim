@@ -1,6 +1,6 @@
 
 /**
- * prim 0.0.2 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
+ * prim 0.0.3 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/prim for details
  */
@@ -66,6 +66,10 @@ var prim;
         }
     }
 
+    function syncTick(fn) {
+        fn();
+    }
+
     function notify(ary, value) {
         prim.nextTick(function () {
             each(ary, function (item) {
@@ -74,10 +78,11 @@ var prim;
         });
     }
 
-    prim = function prim() {
+    prim = function prim(options) {
         var p,
             ok = [],
-            fail = [];
+            fail = [],
+            nextTick = options && options.sync ? syncTick : prim.nextTick;
 
         return (p = {
             callback: function (yes, no) {
@@ -86,7 +91,7 @@ var prim;
                 }
 
                 if (hasProp(p, 'v')) {
-                    prim.nextTick(function () {
+                    nextTick(function () {
                         yes(p.v);
                     });
                 } else {
@@ -96,7 +101,7 @@ var prim;
 
             errback: function (no) {
                 if (hasProp(p, 'e')) {
-                    prim.nextTick(function () {
+                    nextTick(function () {
                         no(p.e);
                     });
                 } else {
@@ -134,7 +139,7 @@ var prim;
 
             promise: {
                 then: function (yes, no) {
-                    var next = prim();
+                    var next = prim(options);
 
                     p.callback(function (v) {
                         try {
@@ -199,9 +204,7 @@ var prim;
     prim.nextTick = typeof setImmediate === 'function' ? setImmediate :
         (typeof process !== 'undefined' && process.nextTick ?
             process.nextTick : (typeof setTimeout !== 'undefined' ?
-                asyncTick : function (fn) {
-        fn();
-    }));
+                asyncTick : syncTick));
 
     if (typeof define === 'function' && define.amd) {
         define(function () { return prim; });
