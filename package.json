@@ -1,6 +1,6 @@
 {
   "name": "prim",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A substandard promise library for use in requirejs code",
   "main": "prim.js",
   "repository": {
