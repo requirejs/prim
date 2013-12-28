@@ -1,217 +1,211 @@
 
 /**
- * prim 0.0.4 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
+ * Prim 0.0.4+ Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/prim for details
  */
 
 /*global setImmediate, process, setTimeout, define, module */
 
-//Set prime.hideResolutionConflict = true to allow "resolution-races"
+//Set Prim.hideResolutionConflict = true to allow "resolution-races"
 //in promise-tests to pass.
-//Since the goal of prim is to be a small impl for trusted code, it is
+//Since the goal of Prim is to be a small impl for trusted code, it is
 //more important to normally throw in this case so that we can find
 //logic errors quicker.
 
-var prim;
+var Prim;
 (function () {
     'use strict';
-    var op = Object.prototype,
-        hasOwn = op.hasOwnProperty,
-        waitingId,
-        waiting = [];
-
-    function hasProp(obj, prop) {
-        return hasOwn.call(obj, prop);
-    }
-
-    /**
-     * Helper function for iterating over an array. If the func returns
-     * a true value, it will break out of the loop.
-     */
-    function each(ary, func) {
-        if (ary) {
-            var i;
-            for (i = 0; i < ary.length; i += 1) {
-                if (ary[i]) {
-                    func(ary[i], i, ary);
-                }
-            }
-        }
-    }
-
-    function check(p) {
-        if (hasProp(p, 'e') || hasProp(p, 'v')) {
-            if (!prim.hideResolutionConflict) {
-                throw new Error('nope');
-            }
-            return false;
-        }
-        return true;
-    }
-
-    function callWaiting() {
-        waitingId = 0;
-        var w = waiting;
-        waiting = [];
-        while (w.length) {
-            w.shift()();
-        }
-    }
-
-    function asyncTick(fn) {
-        waiting.push(fn);
-        if (!waitingId) {
-            waitingId = setTimeout(callWaiting, 0);
-        }
-    }
 
     function syncTick(fn) {
         fn();
     }
 
-    function notify(ary, value) {
-        prim.nextTick(function () {
-            each(ary, function (item) {
-                item(value);
+    function create(options) {
+        options = options || {};
+
+        var waitingId, Inst, nextTick,
+            waiting = [];
+
+        function check(p) {
+            if (p.done) {
+                if (!options.hideResolutionConflict) {
+                    throw new Error('nope');
+                }
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * Call waiting functions. OK if a waiting fn
+         * ends up adding something to this array, it
+         * will get processed in this turn of the event
+         * loop, similar to how a microtask might work.
+         * So, async is still preserved.
+         */
+        function callWaiting() {
+            try {
+                while (waiting.length) {
+                    waiting.shift()();
+                }
+            } finally {
+                waitingId = 0;
+            }
+        }
+
+        function asyncTick(fn) {
+            waiting.push(fn);
+            if (!waitingId) {
+                waitingId = setTimeout(callWaiting, 0);
+            }
+        }
+
+        if (options.sync) {
+            nextTick = syncTick;
+        } else {
+            //Use setImmediate.bind() because attaching it (or setTimeout directly
+            //to Prim will result in errors. Noticed first on IE10,
+            //issue requirejs/alameda#2)
+            nextTick = typeof setImmediate === 'function' ? setImmediate.bind() :
+                (typeof process !== 'undefined' && process.nextTick ?
+                    process.nextTick : (typeof setTimeout !== 'undefined' ?
+                        asyncTick : syncTick));
+        }
+
+        function notify(ary, value) {
+            Inst.nextTick(function () {
+                ary.forEach(function (item) {
+                    item(value);
+                });
             });
-        });
-    }
+        }
 
-    prim = function prim(options) {
-        var p,
-            ok = [],
-            fail = [],
-            nextTick = options && options.sync ? syncTick : prim.nextTick;
+        function callback(p, ok, yes) {
+            if (p.hasOwnProperty('v')) {
+                Inst.nextTick(function () {
+                    yes(p.v);
+                });
+            } else {
+                ok.push(yes);
+            }
+        }
 
-        return (p = {
-            callback: function (yes, no) {
-                if (no) {
-                    p.errback(no);
-                }
+        function errback(p, fail, no) {
+            if (p.hasOwnProperty('e')) {
+                Inst.nextTick(function () {
+                    no(p.e);
+                });
+            } else {
+                fail.push(no);
+            }
+        }
 
-                if (hasProp(p, 'v')) {
-                    nextTick(function () {
-                        yes(p.v);
-                    });
-                } else {
-                    ok.push(yes);
-                }
-            },
+        Inst = function Prim(fn) {
+            var promise,
+                p = {},
+                ok = [],
+                fail = [];
 
-            errback: function (no) {
-                if (hasProp(p, 'e')) {
-                    nextTick(function () {
-                        no(p.e);
-                    });
-                } else {
-                    fail.push(no);
-                }
-            },
+            function fulfill(v, prop, listeners, skipCheck) {
+                if (skipCheck || check(p)) {
+                    p.done = true;
 
-            finished: function () {
-                return hasProp(p, 'e') || hasProp(p, 'v');
-            },
+                    if (promise === v) {
+                        reject(true, new TypeError('value is same promise'));
+                        return;
+                    }
 
-            rejected: function () {
-                return hasProp(p, 'e');
-            },
-
-            resolve: function (v) {
-                if (check(p)) {
-                    p.v = v;
-                    notify(ok, v);
-                }
-                return p;
-            },
-            reject: function (e) {
-                if (check(p)) {
-                    p.e = e;
-                    notify(fail, e);
-                }
-                return p;
-            },
-
-            start: function (fn) {
-                p.resolve();
-                return p.promise.then(fn);
-            },
-
-            promise: {
-                then: function (yes, no) {
-                    var next = prim(options);
-
-                    p.callback(function (v) {
-                        try {
-                            if (yes && typeof yes === 'function') {
-                                v = yes(v);
-                            }
-
-                            if (v && typeof v.then === 'function') {
-                                v.then(next.resolve, next.reject);
-                            } else {
-                                next.resolve(v);
-                            }
-                        } catch (e) {
-                            next.reject(e);
-                        }
-                    }, function (e) {
-                        var err;
-
-                        try {
-                            if (!no || typeof no !== 'function') {
-                                next.reject(e);
-                            } else {
-                                err = no(e);
-
-                                if (err && typeof err.then === 'function') {
-                                    err.then(next.resolve, next.reject);
-                                } else {
-                                    next.resolve(err);
-                                }
-                            }
-                        } catch (e2) {
-                            next.reject(e2);
-                        }
-                    });
-
-                    return next.promise;
-                },
-
-                fail: function (no) {
-                    return p.promise.then(null, no);
-                },
-
-                end: function () {
-                    p.errback(function (e) {
-                        throw e;
-                    });
+                    var then = v && v.then;
+                    if (typeof then === 'function') {
+                        then(resolve.bind(undefined, true), reject.bind(undefined, true));
+                    } else {
+                        p[prop] = v;
+                        notify(listeners, v);
+                    }
                 }
             }
-        });
-    };
 
-    prim.serial = function (ary) {
-        var result = prim().resolve().promise;
-        each(ary, function (item) {
-            result = result.then(function () {
-                return item();
+            function resolve(skipCheck, v) {
+                fulfill(v, 'v', ok, skipCheck);
+            }
+
+            function reject(skipCheck, e) {
+                fulfill(e, 'e', fail, skipCheck);
+            }
+
+
+            try {
+                fn(resolve.bind(null, false), reject.bind(null, false));
+            } catch (e) {
+                p.reject(e);
+            }
+
+            return (promise = {
+                then: function (yes, no) {
+                    var next = new Inst(function (nextResolve, nextReject) {
+
+                        function finish(fn, nextFn, v) {
+                            try {
+                                if (fn && typeof fn === 'function') {
+                                    v = fn(v);
+                                }
+                                nextFn(v);
+                            } catch (e) {
+                                nextReject(e);
+                            }
+                        }
+
+                        callback(p, ok, finish.bind(undefined, yes, nextResolve));
+                        errback(p, fail, finish.bind(undefined, no, nextReject));
+
+                    });
+                    return next;
+                },
+
+                catch: function (no) {
+                    return p.promise.then(null, no);
+                }
             });
-        });
-        return result;
-    };
+        };
 
-    //Use setImmediate.bind() because attaching it (or setTimeout directly
-    //to prim will result in errors. Noticed first on IE10,
-    //issue requirejs/alameda#2)
-    prim.nextTick = typeof setImmediate === 'function' ? setImmediate.bind() :
-        (typeof process !== 'undefined' && process.nextTick ?
-            process.nextTick : (typeof setTimeout !== 'undefined' ?
-                asyncTick : syncTick));
+        Inst.resolve = function (value) {
+            return new Inst(function (yes) {
+                yes(value);
+            });
+        };
+
+        Inst.reject = function (err) {
+            return new Inst(function (yes, no) {
+                no(err);
+            });
+        };
+
+        // TODO: Promise.cast, Promise.all
+        // https://github.com/domenic/promises-unwrapping/blob/master/README.md#promiseall--iterable-
+
+        // TODO: remove?
+        Inst.serial = function (ary) {
+            var result = Inst.resolve();
+            ary.forEach(function (item) {
+                result = result.then(function () {
+                    return item();
+                });
+            });
+            return result;
+        };
+
+        Inst.nextTick = nextTick;
+
+        return Inst;
+    }
+
+    Prim = create();
+    Prim.create = create;
 
     if (typeof define === 'function' && define.amd) {
-        define(function () { return prim; });
+        define(function () { return Prim; });
     } else if (typeof module !== 'undefined' && module.exports) {
-        module.exports = prim;
+        module.exports = Prim;
     }
 }());

@@ -1,28 +1,29 @@
+/*jslint node: true */
 "use strict";
 
-var prim = require('../prim');
+var create = require('../prim').create,
+    Prim = create({
+        hideResolutionConflict: true
+    });
 
-//Set this to true, to allow the resolution-races tests to pass.
-prim.hideResolutionConflict = true;
-
-exports.fulfilled = function (val) {
-    var p = prim();
-    p.resolve(val);
-    return p.promise;
+exports.resolved = function (value) {
+    return Prim.resolve(value);
 };
 
-exports.rejected = function (err) {
-    var p = prim();
-    p.reject(err);
-    return p.promise;
+exports.rejected = function (reason) {
+    return Prim.reject(reason);
 };
 
-exports.pending = function () {
-    var p = prim();
+exports.deferred = function () {
+    var resolve, reject,
+        promise = new Prim(function (res, rej) {
+            resolve = res;
+            reject = rej;
+        });
 
     return {
-        promise: p.promise,
-        fulfill: p.resolve,
-        reject: p.reject
+        promise: promise,
+        resolve: resolve,
+        reject: reject
     };
 };
