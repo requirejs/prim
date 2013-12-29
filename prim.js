@@ -27,16 +27,6 @@ var Prim;
         var waitingId, Inst, nextTick,
             waiting = [];
 
-        function check(p) {
-            if (p.done) {
-                if (!options.hideResolutionConflict) {
-                    throw new Error('nope');
-                }
-                return false;
-            }
-            return true;
-        }
-
         /**
          * Call waiting functions. OK if a waiting fn
          * ends up adding something to this array, it
@@ -102,37 +92,56 @@ var Prim;
         }
 
         Inst = function Prim(fn) {
-            var promise,
+            var promise, f,
                 p = {},
                 ok = [],
                 fail = [];
 
-            function fulfill(v, prop, listeners, skipCheck) {
-                if (skipCheck || check(p)) {
-                    p.done = true;
+            function makeFulfill() {
+                var f, f2,
+                    called = false;
+
+                function fulfill(v, prop, listeners) {
+                    if (called) {
+                        if (!options.hideResolutionConflict) {
+                            throw new Error('duplicate fulfillment call');
+                        }
+                        return;
+                    }
+                    called = true;
 
                     if (promise === v) {
-                        reject(true, new TypeError('value is same promise'));
+                        called = false;
+                        f.reject(new TypeError('value is same promise'));
                         return;
                     }
 
-                    var then = v && v.then;
-                    if (typeof then === 'function') {
-                        then(resolve.bind(undefined, true), reject.bind(undefined, true));
-                    } else {
-                        p[prop] = v;
-                        notify(listeners, v);
+                    try {
+                        var then = v && v.then;
+                        if (typeof then === 'function') {
+                            f2 = makeFulfill();
+                            then.call(v, f2.resolve, f2.reject);
+                        } else {
+                            p[prop] = v;
+                            notify(listeners, v);
+                        }
+                    } catch (e) {
+                        called = false;
+                        f.reject(e);
                     }
                 }
+
+                return (f = {
+                    resolve: function (v) {
+                        fulfill(v, 'v', ok);
+                    },
+                    reject: function(e) {
+                        fulfill(e, 'e', fail);
+                    }
+                });
             }
 
-            function resolve(skipCheck, v) {
-                fulfill(v, 'v', ok, skipCheck);
-            }
-
-            function reject(skipCheck, e) {
-                fulfill(e, 'e', fail, skipCheck);
-            }
+            f = makeFulfill();
 
             promise = {
                 then: function (yes, no) {
@@ -164,9 +173,9 @@ var Prim;
             };
 
             try {
-                fn(resolve.bind(null, false), reject.bind(null, false));
+                fn(f.resolve, f.reject);
             } catch (e) {
-                p.reject(e);
+                f.reject(e);
             }
 
             return promise;
