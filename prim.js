@@ -142,8 +142,10 @@ var Prim;
                             try {
                                 if (fn && typeof fn === 'function') {
                                     v = fn(v);
+                                    nextResolve(v);
+                                } else {
+                                    nextFn(v);
                                 }
-                                nextFn(v);
                             } catch (e) {
                                 nextReject(e);
                             }
