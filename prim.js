@@ -134,14 +134,7 @@ var Prim;
                 fulfill(e, 'e', fail, skipCheck);
             }
 
-
-            try {
-                fn(resolve.bind(null, false), reject.bind(null, false));
-            } catch (e) {
-                p.reject(e);
-            }
-
-            return (promise = {
+            promise = {
                 then: function (yes, no) {
                     var next = new Inst(function (nextResolve, nextReject) {
 
@@ -166,7 +159,15 @@ var Prim;
                 catch: function (no) {
                     return p.promise.then(null, no);
                 }
-            });
+            };
+
+            try {
+                fn(resolve.bind(null, false), reject.bind(null, false));
+            } catch (e) {
+                p.reject(e);
+            }
+
+            return promise;
         };
 
         Inst.resolve = function (value) {
