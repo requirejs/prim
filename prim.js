@@ -1,18 +1,11 @@
 /**
- * Prim 0.0.4+ Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
+ * prim 0.0.4+ Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/prim for details
  */
 
 /*global setImmediate, process, setTimeout, define, module */
-
-//Set Prim.hideResolutionConflict = true to allow "resolution-races"
-//in promise-tests to pass.
-//Since the goal of Prim is to be a small impl for trusted code, it is
-//more important to normally throw in this case so that we can find
-//logic errors quicker.
-
-var Prim;
+var prim;
 (function () {
     'use strict';
 
@@ -47,7 +40,7 @@ var Prim;
             nextTick = syncTick;
         } else {
             //Use setImmediate.bind() because attaching it (or setTimeout directly
-            //to Prim will result in errors. Noticed first on IE10,
+            //to prim will result in errors. Noticed first on IE10,
             //issue requirejs/alameda#2)
             nextTick = typeof setImmediate === 'function' ? setImmediate.bind() :
                 (typeof process !== 'undefined' && process.nextTick ?
@@ -83,7 +76,7 @@ var Prim;
             }
         }
 
-        Inst = function Prim(fn) {
+        Inst = function prim(fn) {
             var promise, f,
                 p = {},
                 ok = [],
@@ -207,12 +200,12 @@ var Prim;
         return Inst;
     }
 
-    Prim = make();
-    Prim.make = make;
+    prim = make();
+    prim.make = make;
 
     if (typeof define === 'function' && define.amd) {
-        define(function () { return Prim; });
+        define(function () { return prim; });
     } else if (typeof module !== 'undefined' && module.exports) {
-        module.exports = Prim;
+        module.exports = prim;
     }
 }());
