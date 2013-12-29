@@ -1,4 +1,3 @@
-
 /**
  * Prim 0.0.4+ Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -21,19 +20,12 @@ var Prim;
         fn();
     }
 
-    function create(options) {
+    function make(options) {
         options = options || {};
 
         var waitingId, Inst, nextTick,
             waiting = [];
 
-        /**
-         * Call waiting functions. OK if a waiting fn
-         * ends up adding something to this array, it
-         * will get processed in this turn of the event
-         * loop, similar to how a microtask might work.
-         * So, async is still preserved.
-         */
         function callWaiting() {
             try {
                 while (waiting.length) {
@@ -117,8 +109,10 @@ var Prim;
                     }
 
                     try {
-                        var then = v && v.then;
-                        if (typeof then === 'function') {
+                        var then = v && v.then,
+                            type = typeof v;
+                        if ((type === 'object' || type === 'function') &&
+                            typeof then === 'function') {
                             f2 = makeFulfill();
                             then.call(v, f2.resolve, f2.reject);
                         } else {
@@ -131,14 +125,15 @@ var Prim;
                     }
                 }
 
-                return (f = {
+                f = {
                     resolve: function (v) {
                         fulfill(v, 'v', ok);
                     },
                     reject: function(e) {
                         fulfill(e, 'e', fail);
                     }
-                });
+                };
+                return f;
             }
 
             f = makeFulfill();
@@ -168,7 +163,7 @@ var Prim;
                 },
 
                 catch: function (no) {
-                    return p.promise.then(null, no);
+                    return promise.then(null, no);
                 }
             };
 
@@ -212,8 +207,8 @@ var Prim;
         return Inst;
     }
 
-    Prim = create();
-    Prim.create = create;
+    Prim = make();
+    Prim.make = make;
 
     if (typeof define === 'function' && define.amd) {
         define(function () { return Prim; });

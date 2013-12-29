@@ -1,8 +1,8 @@
 /*jslint node: true */
 "use strict";
 
-var create = require('../prim').create,
-    Prim = create({
+var make = require('../prim').make,
+    Prim = make({
         hideResolutionConflict: true
     });
 
