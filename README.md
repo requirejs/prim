@@ -6,27 +6,9 @@ prim passes version 2.0.3 of the
 [promises-aplus-tests](https://github.com/promises-aplus/promises-tests) as the
 baseline tests to check if it is working like a promise library.
 
-## Motivation
-
-This differs from a a more robust standard promise library in the following
-ways.
-
-### Minimum bar
-
-This library just wants a minimum implementation that passes the standard tests.
-The hope is that over time, requirejs-related code that uses this library can
-just remove it and use promises provided by the JS language.
-
-### Sync
-
-Allows sync promise resolution if `prim.nextTick` is set to a function
-that immediately calls its argument. By default, it will try to use
-setImmediate, process.nextTick or setTimeout though.
-
-Sync resolution is normally a very bad idea. You should not look for this in a
-promise library. However, r.js has some use cases in where
-it has traditionally worked synchronously, Node's sync module system being the
-main one. This override behavior allows that to work.
+This library just aims to be a minimum implementation that passes the standard
+tests. The hope is that over time, requirejs-related code that uses this library
+can just remove it and use promises provided by the JS language.
 
 ## API
 
@@ -77,9 +59,13 @@ to be fulfilled, and resolves the all promise with an array of the results:
 
 ```javascript
 prim.all([promise1, promise2]).then(function(values))
-// same as p.then(null, function (error) {});
-p.catch(function (error) {
-    console.log('Promise p has error: ' + error);
+.then(function (values) {
+    // values[0] is the value for promise1,
+    // values[1] is the value for promise2
+}, function (err) {
+    // The first promise that is in the reject state
+    // will result `all` promise being rejected with
+    // that rejection value.
 });
 ```
 

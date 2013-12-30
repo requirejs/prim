@@ -1,7 +1,7 @@
 {
   "name": "prim",
   "version": "0.0.4",
-  "description": "A substandard promise library for use in requirejs code",
+  "description": "Promise lib for use inside requirejs-related projects",
   "main": "prim.js",
   "repository": {
     "type": "git",
