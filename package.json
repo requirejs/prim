@@ -1,6 +1,6 @@
 {
   "name": "prim",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Promise lib for use inside requirejs-related projects",
   "main": "prim.js",
   "repository": {
