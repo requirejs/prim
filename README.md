@@ -7,7 +7,7 @@ prim passes version 2.0.3 of the
 baseline tests to check if it is working like a promise library.
 
 This library just aims to be a minimum implementation that passes the standard
-tests. The hope is that over time, requirejs-related code that uses this library
+tests. The hope is that over time, requirejs-related code that use this library
 can just remove it and use promises provided by the JS language.
 
 ## API
