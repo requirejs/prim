@@ -1,5 +1,5 @@
 /**
- * prim 0.0.4+ Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
+ * prim 0.0.5 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/prim for details
  */
