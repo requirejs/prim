@@ -1,10 +1,7 @@
 /*jslint node: true */
 "use strict";
 
-var make = require('../prim').make,
-    prim = make({
-        hideResolutionConflict: true
-    });
+var prim = require('../prim');
 
 exports.resolved = function (value) {
     return prim.resolve(value);
