@@ -63,6 +63,15 @@ describe('prim', function () {
             });
         });
 
+        it('empty array', function (done) {
+            prim.all([]).then(function (values) {
+                assert.equal(0, values.length);
+                done();
+            }).catch(function (e) {
+                console.log(e);
+            });
+        });
+
         it('a rejected promise', function (done) {
             prim.all(expected.map(function (value, i) {
                 if (i === 0) {

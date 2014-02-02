@@ -1,5 +1,5 @@
 /**
- * prim 0.0.6 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
+ * prim 0.0.7 Copyright (c) 2012-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/prim for details
  */
@@ -204,13 +204,17 @@ var prim;
                 }
             }
 
-            ary.forEach(function (item, i) {
-                prim.cast(item).then(function (v) {
-                    resolved(i, v);
-                }, function (err) {
-                    no(err);
+            if (!ary.length) {
+                yes([]);
+            } else {
+                ary.forEach(function (item, i) {
+                    prim.cast(item).then(function (v) {
+                        resolved(i, v);
+                    }, function (err) {
+                        no(err);
+                    });
                 });
-            });
+            }
         });
     };
 
