@@ -2,7 +2,7 @@ A promise library for use in requirejs-related projects. If you are looking
 for a robust promise library, consider [Q](https://github.com/kriskowal/q)
 instead.
 
-prim passes version 2.0.3 of the
+prim passes version 2.0.4 of the
 [promises-aplus-tests](https://github.com/promises-aplus/promises-tests) as the
 baseline tests to check if it is working like a promise library.
 
