@@ -82,4 +82,4 @@ test suite:
 
 ## License
 
-MIT or new BSD.
+MIT
