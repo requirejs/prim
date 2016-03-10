@@ -83,3 +83,8 @@ test suite:
 ## License
 
 MIT
+
+## Code of Conduct
+
+[jQuery Foundation Code of Conduct](https://jquery.org/conduct/).
+
